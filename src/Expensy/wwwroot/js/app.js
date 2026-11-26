@@ -15,6 +15,10 @@ import { renderStats } from './views/stats.js';
 import { renderArchive, renderSettlement } from './views/archive.js';
 import { renderSettings } from './views/settings.js';
 
+// No zooming, like a native app. index.html and app.css already ask for that, but Safari on iPhone ignores
+// those for pinching, so its own pinch gesture events are cancelled too.
+for (const type of ['gesturestart', 'gesturechange']) document.addEventListener(type, (e) => e.preventDefault());
+
 const view = document.getElementById('view');
 const tabs = document.getElementById('tabs');
 const addButton = document.getElementById('fab'); // big "Add expense" button (phone layout)

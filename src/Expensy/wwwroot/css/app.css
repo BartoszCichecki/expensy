@@ -39,7 +39,10 @@
 
 /* ========== Base ========== */
 * { box-sizing: border-box; }
-html { -webkit-text-size-adjust: 100%; }
+html {
+  -webkit-text-size-adjust: 100%;
+  touch-action: pan-x pan-y; /* scrolling only: no pinch or double-tap zoom, like a native app (see also app.js) */
+}
 body {
   margin: 0;
   background: var(--bg);
@@ -372,6 +375,8 @@ select.input:focus { outline: none; } /* no highlight: Chromium treats a click o
   background: var(--bg); border-top: 1px solid var(--border);
 }
 .keypad.away { display: none; } /* while the note or date field has the system keyboard */
+/* Hidden switch that makes iPhones tick on key presses (js/haptics.js). Invisible, but still rendered. */
+.haptic-switch { position: fixed; left: 0; bottom: 0; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
 .key {
   border: 0; border-radius: 14px; background: var(--surface); box-shadow: var(--shadow);
   font-size: 24px; font-weight: 500; display: grid; place-items: center;
