@@ -1,0 +1,24 @@
+services:
+  expensy:
+    build: .
+    image: expensy:latest
+    container_name: expensy
+    restart: unless-stopped
+    # User and group the app runs as (never root). Set PUID / PGID in a .env file next to this one,
+    # e.g. to match the owner of a host directory mounted at /data.
+    user: "${PUID:-1000}:${PGID:-1000}"
+    ports:
+      - "8080:8080"
+    volumes:
+      # Database and photos. To keep them in a host directory instead, use e.g. /srv/expensy:/data
+      # (the directory must be writable by PUID:PGID).
+      - expensy-data:/data
+    environment:
+      # Place names and mini maps via OpenStreetMap (sends coordinates to openstreetmap.org).
+      EXPENSY_GEOCODING: "true"
+      # Daily CSV backup of all expenses at midnight to /data/backups, keeping the last N days (0 = off).
+      EXPENSY_BACKUP: "7"
+      TZ: Europe/Warsaw
+
+volumes:
+  expensy-data:

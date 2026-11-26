@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "expensy",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "src/Expensy", "--urls", "http://localhost:5110"],
+      "port": 5110
+    }
+  ]
+}

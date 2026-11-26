@@ -1,0 +1,53 @@
+# Builds the Docker image and publishes it to GitHub Container Registry when a version tag is pushed:
+#
+#   git tag 1.0 && git push origin 1.0        (a leading "v", e.g. v1.0, works too)
+#
+# Result: ghcr.io/<owner>/<repo>:1.0 and :latest, for amd64 and arm64 (e.g. Raspberry Pi).
+name: Release
+
+on:
+  push:
+    tags: ["v*", "[0-9]*"]
+
+permissions:
+  contents: read
+  packages: write # push to ghcr.io
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Version from the tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT" # v1.0 → 1.0
+
+      - name: Image name and tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=raw,value=${{ steps.version.outputs.version }}
+            type=raw,value=latest
+
+      - uses: docker/setup-qemu-action@v3 # runs the arm64 parts of the image build
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          build-args: VERSION=${{ steps.version.outputs.version }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
