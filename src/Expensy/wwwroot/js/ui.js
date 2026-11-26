@@ -13,8 +13,9 @@ const sheet = () => document.getElementById('sheet');
  * Shows `content` in the bottom sheet under a title and returns the dialog element.
  * `setup(el)` runs right after rendering, to wire up events. ✕, Esc and tapping outside close it.
  */
-export function openSheet(title, content, setup) {
+export function openSheet(title, content, setup, { fullScreen = false } = {}) {
   const el = sheet();
+  el.classList.toggle('full', fullScreen); // phones: the whole screen instead of a bottom sheet
   el.innerHTML = html`
     <div class="sheet-inner">
       <div class="grabber"></div>

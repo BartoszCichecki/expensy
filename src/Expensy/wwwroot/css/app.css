@@ -346,6 +346,17 @@ select.input:focus { outline: none; } /* no highlight: Chromium treats a click o
 
 /* Category picker */
 .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+/* In the expense form on phones: two rows that scroll sideways, edge to edge. Bigger screens: wrapped as usual. */
+.chip-rows .chip-row { display: contents; }
+@media (max-width: 699px) {
+  .chip-rows {
+    flex-direction: column; flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none;
+    margin: 0 -16px; padding: 0 16px; scroll-padding: 0 16px;
+  }
+  .chip-rows::-webkit-scrollbar { display: none; }
+  .chip-rows .chip-row { display: flex; gap: 8px; width: max-content; }
+  .chip-rows .chip { white-space: nowrap; }
+}
 .chip {
   display: inline-flex; align-items: center; gap: 6px; padding: 8px 12px; min-height: 40px;
   border-radius: 999px; border: 1px solid var(--border); background: var(--surface); font-size: 14px; font-weight: 500;
@@ -393,6 +404,16 @@ select.input:focus { outline: none; } /* no highlight: Chromium treats a click o
 .photo-preview img { display: block; width: 100%; max-height: 240px; object-fit: cover; border-radius: 12px; cursor: zoom-in; }
 .photo-preview .remove { position: absolute; top: 8px; right: 8px; background: rgb(0 0 0 / .55); color: #fff; }
 
+/* Photo in the expense form: a thumbnail in its row, with a small × to remove it */
+.photo-thumb { position: relative; display: block; flex: none; }
+.photo-thumb img { display: block; width: 40px; height: 40px; object-fit: cover; border-radius: 8px; cursor: zoom-in; }
+.photo-thumb .remove {
+  position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; padding: 3px; border: 0; border-radius: 50%;
+  background: var(--text); color: var(--bg); display: grid; place-items: center;
+}
+.photo-thumb .remove svg { width: 14px; height: 14px; color: inherit; }
+.meta-row:has(.photo-thumb) { padding: 6px 0; }
+
 /* Mini map: a 3×3 grid of OpenStreetMap tiles, positioned so the place is in the middle (see js/maps.js) */
 .mini-map {
   position: relative; display: block; width: 100%; height: 160px; padding: 0; overflow: hidden;
@@ -420,6 +441,18 @@ select.input:focus { outline: none; } /* no highlight: Chromium treats a click o
 .sheet-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 0 10px; position: sticky; top: 0; background: var(--bg); z-index: 1; }
 .sheet-head h2 { margin: 0; font-size: 18px; }
 .grabber { width: 40px; height: 5px; border-radius: 3px; background: var(--border); margin: 0 auto 4px; }
+/* Full screen on phones (the expense form): no rounded top, the keypad at the very bottom. */
+@media (max-width: 699px) {
+  .sheet.full { height: 100%; max-height: none; border-radius: 0; animation-name: sheet-in; }
+  .sheet.full .grabber { display: none; }
+  .sheet.full .sheet-inner { min-height: 100%; display: flex; flex-direction: column; padding-top: calc(4px + var(--safe-t)); }
+  .sheet.full form { flex: 1; display: flex; flex-direction: column; }
+  /* The keys grow into free space (up to ~60 px tall) and shrink to 52 px on shorter phones. */
+  .sheet.full .keypad { flex-grow: 1; margin-top: auto; grid-auto-rows: minmax(52px, 1fr); max-height: calc(290px + var(--safe-b)); }
+  .sheet.full .sheet-head { padding: 2px 0 6px; }
+  .sheet.full .amount-field { padding: 0 0 8px; }
+}
+@keyframes sheet-in { from { transform: translateY(24px); opacity: 0; } }
 @media (min-width: 700px) {
   .sheet { margin: auto; border-radius: 22px; max-width: 520px; } /* centred dialog instead of a bottom sheet */
 }

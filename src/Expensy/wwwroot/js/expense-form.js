@@ -1,4 +1,4 @@
-// Add / edit expense form (in the bottom sheet).
+// Add / edit expense form (full screen on phones, a dialog on bigger screens).
 import { api } from './api.js';
 import { t } from './i18n.js';
 import { html } from './html.js';
@@ -44,11 +44,14 @@ export function openExpenseForm(expense, onChange) {
       <div class="conversion" data-conversion hidden></div>
 
       <div class="field">
-        <div class="chips" data-categories>
-          ${categories.map((c) => html`
-            <button type="button" class="chip" data-cat="${c.id}" style="--c:${c.color}">
-              <span>${c.icon}</span>${categoryName(c)}
-            </button>`)}
+        <div class="chips chip-rows" data-categories>
+          ${twoRows(categories).map((row) => html`
+            <div class="chip-row">
+              ${row.map((c) => html`
+                <button type="button" class="chip" data-cat="${c.id}" style="--c:${c.color}">
+                  <span>${c.icon}</span>${categoryName(c)}
+                </button>`)}
+            </div>`)}
         </div>
       </div>
 
@@ -66,12 +69,12 @@ export function openExpenseForm(expense, onChange) {
         <div class="meta-row">
           ${icons.camera}
           <span class="grow" data-photo-label></span>
+          <span data-photo-preview></span>
           <label class="link-btn">
             <span data-photo-action></span>
             <input type="file" accept="image/*" name="photo" hidden>
           </label>
         </div>
-        <div data-photo-preview></div>
       </div>
 
       <p class="error-text" data-error hidden></p>
@@ -80,7 +83,7 @@ export function openExpenseForm(expense, onChange) {
         <div class="form-actions">
           <button type="submit" class="btn primary" data-save>${icons.check} ${t('common.save')}</button>
         </div>`}
-    </form>`);
+    </form>`, null, { fullScreen: true });
 
   const $ = (selector) => el.querySelector(selector);
   const amountInput = $('[name=amount]');
@@ -150,11 +153,12 @@ export function openExpenseForm(expense, onChange) {
     const url = form.photo.newUrl ?? form.photo.existingUrl;
     $('[data-photo-action]').textContent = url ? t('form.change') : t('form.add');
     $('[data-photo-label]').textContent = url ? t('form.photo') : t('form.photoOptional');
+    // A small thumbnail in the row keeps the form on one screen; tapping it shows the photo full size.
     $('[data-photo-preview]').innerHTML = url ? html`
-      <div class="photo-preview">
+      <span class="photo-thumb">
         <img src="${url}" alt="${t('form.photoPreview')}">
-        <button type="button" class="icon-btn remove" data-photo-remove aria-label="${t('form.removePhoto')}">${icons.close}</button>
-      </div>`.s : '';
+        <button type="button" class="remove" data-photo-remove aria-label="${t('form.removePhoto')}">${icons.close}</button>
+      </span>`.s : '';
   };
 
   const setNewPhoto = (blob) => {
@@ -279,3 +283,11 @@ export function openExpenseForm(expense, onChange) {
 const locationOf = (e) => (e.latitude != null
   ? { status: 'ok', lat: e.latitude, lon: e.longitude, accuracy: e.accuracy, place: e.place }
   : { status: 'off' });
+
+/**
+ * Splits the categories into two rows for the sideways-scrolling picker: 1st, 3rd, 5th… on top, 2nd, 4th… below,
+ * so the first categories in the list are the ones visible without scrolling.
+ */
+function twoRows(categories) {
+  return [categories.filter((_, i) => i % 2 === 0), categories.filter((_, i) => i % 2 === 1)];
+}
