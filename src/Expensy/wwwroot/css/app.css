@@ -141,7 +141,6 @@ body:has(.fab:not([hidden])) .view { padding-bottom: calc(var(--tabs-h) + var(--
 
   .fab { display: none !important; }                    /* the sidebar has its own Add button */
   .page-head .app-title { display: none; }              /* the sidebar already shows the name */
-  .toast { bottom: 32px; left: calc(50% + var(--sidebar-w) / 2); }
 }
 
 /* ========== Cards ========== */
@@ -405,7 +404,10 @@ select.input:focus { outline: none; } /* no highlight: Chromium treats a click o
 .meta-row svg { width: 20px; height: 20px; color: var(--muted); flex: none; }
 .meta-row .grow { overflow: hidden; text-overflow: ellipsis; }
 .meta-row .wrap { white-space: pre-wrap; overflow-wrap: anywhere; }
+/* The note: one line to start with, grows with the text (expense-form.js) up to about five lines, then scrolls */
+.note-input { display: block; resize: none; line-height: 1.4; max-height: 142px; }
 .meta-row input[type=datetime-local] { border: 0; background: transparent; font-size: 14px; padding: 0; min-height: 0; flex: 1; }
+.meta-row input[type=datetime-local]::-webkit-date-and-time-value { text-align: left; } /* iOS centres it otherwise */
 .detail-block { margin-bottom: 12px; }
 
 .preview-amount { text-align: center; font-size: 44px; font-weight: 700; letter-spacing: -.03em; padding: 4px 0 16px; white-space: nowrap; overflow: hidden; } /* see fitText */
@@ -445,6 +447,7 @@ select.input:focus { outline: none; } /* no highlight: Chromium treats a click o
   border-radius: 22px 22px 0 0; background: var(--bg); color: var(--text);
 }
 .sheet::backdrop { background: rgb(0 0 0 / .4); }
+.sheet:focus, .viewer:focus { outline: none; } /* the dialogs take the focus when they open (ui.js) */
 .sheet[open] { animation: sheet-up .22s ease-out; }
 @keyframes sheet-up { from { transform: translateY(40px); opacity: .4; } }
 .sheet-inner { padding: 8px 16px calc(16px + var(--safe-b)); }
@@ -455,10 +458,15 @@ select.input:focus { outline: none; } /* no highlight: Chromium treats a click o
 @media (max-width: 699px) {
   .sheet.full { height: 100%; max-height: none; border-radius: 0; animation-name: sheet-in; }
   .sheet.full .grabber { display: none; }
-  .sheet.full .sheet-inner { min-height: 100%; display: flex; flex-direction: column; padding-top: calc(4px + var(--safe-t)); }
-  .sheet.full form { flex: 1; display: flex; flex-direction: column; }
-  /* The keys grow into free space (up to ~60 px tall) and shrink to 52 px on shorter phones. */
-  .sheet.full .keypad { flex-grow: 1; margin-top: auto; grid-auto-rows: minmax(52px, 1fr); max-height: calc(290px + var(--safe-b)); }
+  /* Three parts: the header and the keypad stay put, the fields between them scroll when they don't fit. */
+  .sheet.full .sheet-inner { height: 100%; display: flex; flex-direction: column; padding-top: calc(4px + var(--safe-t)); }
+  .sheet.full form { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .sheet.full .form-scroll {
+    flex: 0 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+    margin: 0 -16px; padding: 0 16px 12px; /* full width, so the edge-to-edge category rows don't scroll it sideways */
+  }
+  /* The keys grow into free space (up to ~60 px tall) and keep 52 px when the fields need the room. */
+  .sheet.full .keypad { flex: 1 0 auto; margin-top: auto; grid-auto-rows: minmax(52px, 1fr); max-height: calc(290px + var(--safe-b)); }
   .sheet.full .sheet-head { padding: 2px 0 6px; }
   .sheet.full .amount-field { padding: 0 0 8px; }
 }
@@ -480,11 +488,28 @@ select.input:focus { outline: none; } /* no highlight: Chromium treats a click o
 
 /* ========== Toast ========== */
 .toast {
-  position: fixed; z-index: 100; left: 50%; transform: translateX(-50%);
+  position: fixed; inset: auto; margin: 0; border: 0; overflow: visible; /* undo the browser's popover defaults */
+  left: 50%; transform: translateX(-50%);
   bottom: calc(var(--tabs-h) + var(--safe-b) + 90px); /* above the Add button */
-  display: flex; align-items: center; gap: 12px;
+  align-items: center; gap: 12px;
   background: #1f2937; color: #fff; padding: 12px 16px; border-radius: 14px; font-size: 14px;
   box-shadow: 0 8px 24px rgb(0 0 0 / .25); width: max-content; max-width: calc(100vw - 32px);
+}
+.toast:popover-open { display: flex; }
+/* Errors: red, at the top, where they don't cover the keypad or the Save button */
+.toast.error { top: calc(var(--safe-t) + 12px); bottom: auto; background: #dc2626; font-weight: 500; }
+/* Slides in (errors from the top, the rest from below), fades out; ui.js hides it when the fade ends. */
+@media (prefers-reduced-motion: no-preference) {
+  .toast:popover-open { animation: toast-up .18s ease-out; }
+  .toast.error:popover-open { animation-name: toast-down; }
+  .toast:popover-open.leaving { animation: toast-fade .2s ease-in forwards; }
+}
+@keyframes toast-up { from { opacity: 0; translate: 0 12px; } }
+@keyframes toast-down { from { opacity: 0; translate: 0 -100%; } }
+@keyframes toast-fade { to { opacity: 0; } }
+@media (min-width: 900px) { /* sidebar layout: centred in the content area, no Add button to clear */
+  .toast { bottom: 32px; left: calc(50% + var(--sidebar-w) / 2); }
+  .toast.error { bottom: auto; }
 }
 .toast button { border: 0; background: none; color: #5eead4; font-weight: 700; padding: 0; }
 

@@ -28,6 +28,7 @@ export function openSheet(title, content, setup, { fullScreen = false } = {}) {
   el.querySelector('[data-close]').onclick = closeSheet;
   el.onclick = (e) => { if (e.target === el) closeSheet(); }; // tap on the backdrop
   if (!el.open) el.showModal();
+  el.focus({ preventScroll: true }); // otherwise the browser focuses the first button, the ×, and may draw a ring round it
   setup?.(el);
   return el;
 }
@@ -60,13 +61,14 @@ export function confirmSheet({ title, message, confirmLabel, danger = false }) {
 /** Shows a message in the form's <p data-error> (or hides it when `message` is empty). */
 function showFormError(form, message) {
   const p = form.querySelector('[data-error]');
+  if (!p) { if (message) toast(message, null, { error: true }); return; }
   p.textContent = message ?? '';
   p.hidden = !message;
 }
 
 /**
- * Handles a form submit: disables the submit button while `action` runs, and shows its error in the form.
- * Returns true if the action succeeded.
+ * Handles a form submit: disables the submit button while `action` runs, and shows its error in the form's
+ * <p data-error> — or, in a form without one, as an error toast. Returns true if the action succeeded.
  *
  *   form.onsubmit = (e) => submitForm(e, async () => { await api.something(); closeSheet(); });
  */
@@ -177,6 +179,7 @@ export function handleClick(target, handlers) {
 export function showPhoto(src) {
   const viewer = document.createElement('dialog');
   viewer.className = 'viewer';
+  viewer.tabIndex = -1; // takes the focus itself, like the sheet, so the × isn't highlighted
   viewer.innerHTML = html`
     <img src="${src}" alt="${t('form.photo')}">
     <button class="icon-btn" aria-label="${t('common.close')}">${icons.close}</button>`.s;
@@ -184,23 +187,40 @@ export function showPhoto(src) {
   viewer.addEventListener('close', () => viewer.remove());
   document.body.append(viewer);
   viewer.showModal();
+  viewer.focus({ preventScroll: true });
 }
 
 // ---------- Toast ----------
 
 let toastTimer;
+let toastRun = 0; // which toast is the current one; an older one's fade-out mustn't hide a newer one
 
-/** Short message at the bottom of the screen; `action` adds a button, e.g. { label: 'Undo', run() {...} }. */
-export function toast(message, action) {
+/**
+ * Short message at the bottom of the screen (errors: red, at the top). `action` adds a button,
+ * e.g. { label: 'Undo', run() {...} }. It's a popover, so it shows above an open dialog too.
+ */
+export function toast(message, action, { error = false } = {}) {
   const el = document.getElementById('toast');
+  const run = ++toastRun;
   el.innerHTML = html`<span>${message}</span>${action && html`<button type="button">${action.label}</button>`}`.s;
-  if (action) el.querySelector('button').onclick = () => { el.hidden = true; action.run(); };
-  el.hidden = false;
+  el.classList.toggle('error', error);
+  el.classList.remove('leaving');
+  if (action) el.querySelector('button').onclick = () => { fadeOut(el, run); action.run(); };
+  // Showing it again puts it above a dialog that opened since, and replays the slide-in animation.
+  if (el.matches(':popover-open')) el.hidePopover();
+  el.showPopover();
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => (el.hidden = true), action ? 6000 : 3000);
+  toastTimer = setTimeout(() => fadeOut(el, run), action ? 6000 : 3000);
 }
 
-export const toastError = (err) => toast(err?.message ?? t('common.somethingWrong'));
+/** Fades the toast out (app.css: .leaving), then hides it — unless a newer toast has replaced it meanwhile. */
+async function fadeOut(el, run) {
+  el.classList.add('leaving');
+  await Promise.all(el.getAnimations().map((a) => a.finished)).catch(() => {}); // none with reduced motion
+  if (run === toastRun && el.matches(':popover-open')) el.hidePopover();
+}
+
+export const toastError = (err) => toast(err?.message ?? t('common.somethingWrong'), null, { error: true });
 
 // ---------- Text that must fit ----------
 

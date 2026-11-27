@@ -35,49 +35,52 @@ export function openExpenseForm(expense, onChange) {
 
   const el = openSheet(isNew ? t('form.newTitle') : t('form.editTitle'), html`
     <form novalidate>
-      <div class="amount-field">
-        <span class="spacer"></span>
-        <input name="amount" inputmode="decimal" autocomplete="off" placeholder="0" aria-label="${t('form.amount')}"
-               value="${isNew ? '' : centsToInput(expense.amountCents)}">
-        <span class="cur" data-currency>${currencySymbol()}</span>
-      </div>
-      <div class="conversion" data-conversion hidden></div>
+      <!-- Everything above the keypad; on a full-screen phone form this part scrolls if it doesn't fit -->
+      <div class="form-scroll">
+        <div class="amount-field">
+          <span class="spacer"></span>
+          <input name="amount" inputmode="decimal" autocomplete="off" placeholder="0" aria-label="${t('form.amount')}"
+                 value="${isNew ? '' : centsToInput(expense.amountCents)}">
+          <span class="cur" data-currency>${currencySymbol()}</span>
+        </div>
+        <div class="conversion" data-conversion hidden></div>
 
-      <div class="field">
-        <div class="chips chip-rows" data-categories>
-          ${twoRows(categories).map((row) => html`
-            <div class="chip-row">
-              ${row.map((c) => html`
-                <button type="button" class="chip" data-cat="${c.id}" style="--c:${c.color}">
-                  <span>${c.icon}</span>${categoryName(c)}
-                </button>`)}
-            </div>`)}
+        <div class="field">
+          <div class="chips chip-rows" data-categories>
+            ${twoRows(categories).map((row) => html`
+              <div class="chip-row">
+                ${row.map((c) => html`
+                  <button type="button" class="chip" data-cat="${c.id}" style="--c:${c.color}">
+                    <span>${c.icon}</span>${categoryName(c)}
+                  </button>`)}
+              </div>`)}
+          </div>
+        </div>
+
+        <label class="field">
+          <textarea class="input note-input" name="note" rows="1" maxlength="500" placeholder="${t('form.note')}">${expense?.note ?? ''}</textarea>
+        </label>
+
+        <div class="card details">
+          <div class="meta-row">
+            ${icons.clock}
+            <input type="datetime-local" name="spentAt" aria-label="${t('form.dateTime')}"
+                   value="${toLocalInput(expense?.spentAt ?? new Date().toISOString())}">
+          </div>
+          <div class="meta-row" data-location></div>
+          <div class="meta-row">
+            ${icons.camera}
+            <span class="grow" data-photo-label></span>
+            <span data-photo-preview></span>
+            <label class="link-btn">
+              <span data-photo-action></span>
+              <input type="file" accept="image/*" name="photo" hidden>
+            </label>
+          </div>
         </div>
       </div>
 
-      <label class="field">
-        <input class="input" name="note" maxlength="500" placeholder="${t('form.note')}" value="${expense?.note ?? ''}">
-      </label>
-
-      <div class="card details">
-        <div class="meta-row">
-          ${icons.clock}
-          <input type="datetime-local" name="spentAt" aria-label="${t('form.dateTime')}"
-                 value="${toLocalInput(expense?.spentAt ?? new Date().toISOString())}">
-        </div>
-        <div class="meta-row" data-location></div>
-        <div class="meta-row">
-          ${icons.camera}
-          <span class="grow" data-photo-label></span>
-          <span data-photo-preview></span>
-          <label class="link-btn">
-            <span data-photo-action></span>
-            <input type="file" accept="image/*" name="photo" hidden>
-          </label>
-        </div>
-      </div>
-
-      <p class="error-text" data-error hidden></p>
+      <!-- no <p data-error>: errors show as a toast, so nothing moves the keypad -->
 
       ${keypad ? keypadHtml() : html`
         <div class="form-actions">
@@ -87,8 +90,18 @@ export function openExpenseForm(expense, onChange) {
 
   const $ = (selector) => el.querySelector(selector);
   const amountInput = $('[name=amount]');
-  if (keypad) bindKeypad(el, amountInput); else restrictAmountInput(amountInput);
+  if (keypad) bindKeypad(el, amountInput);
+  else { restrictAmountInput(amountInput); amountInput.focus(); } // wide screens: type the amount straight away
   bindMapLinks($('.sheet-inner'));
+
+  // The note grows with its text (up to a few lines, see .note-input), so longer notes stay readable.
+  const note = $('[name=note]');
+  const growNote = () => {
+    note.style.height = 'auto';
+    note.style.height = `${note.scrollHeight + note.offsetHeight - note.clientHeight}px`; // + the borders
+  };
+  note.addEventListener('input', growNote);
+  growNote();
 
   // ----- categories (any number; tap to select, tap again to unselect) -----
 
