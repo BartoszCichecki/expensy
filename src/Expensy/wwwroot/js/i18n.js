@@ -407,13 +407,17 @@ export const LANGUAGES = {
 
 const LANGUAGE_PREF = 'expensy.language';
 
-/** 'auto' or a language code — the user's choice on this device. Changing it needs a reload. */
-export const getLanguagePreference = () => loadPref(LANGUAGE_PREF, 'auto');
-export const setLanguagePreference = (value) => savePref(LANGUAGE_PREF, value === 'auto' ? null : value);
+/**
+ * A language code, or 'auto' for the device's language — the user's choice on this device; English until they pick.
+ * Changing it needs a reload.
+ */
+export const getLanguagePreference = () => loadPref(LANGUAGE_PREF, 'en');
+export const setLanguagePreference = (value) => savePref(LANGUAGE_PREF, value);
 
 function detectLanguage() {
   const pref = getLanguagePreference();
   if (LANGUAGES[pref]) return pref;
+  // 'auto': the first of the device's languages that the app has
   for (const tag of navigator.languages ?? [navigator.language]) {
     const code = tag?.slice(0, 2).toLowerCase();
     if (LANGUAGES[code]) return code;

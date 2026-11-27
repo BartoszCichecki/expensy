@@ -2,7 +2,7 @@
 import { api } from '../api.js';
 import { t } from '../i18n.js';
 import { html } from '../html.js';
-import { statsBlock, bindChart } from './common.js';
+import { statsBlock, bindStats } from './common.js';
 
 let period = 'current'; // 'current' | 'all' — remembered while the app is open
 
@@ -19,7 +19,7 @@ export async function renderStats(view) {
     </div>
     ${statsBlock(expenses)}`.s;
 
-  bindChart(view);
+  bindStats(view);
   view.onclick = (e) => {
     const chosen = e.target.closest('[data-period]')?.dataset.period;
     if (chosen && chosen !== period) {

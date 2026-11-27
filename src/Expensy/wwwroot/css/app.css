@@ -170,6 +170,7 @@ details summary { cursor: pointer; color: var(--muted); font-size: 14px; padding
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
   min-height: 44px; padding: 0 16px; border-radius: 12px; border: 0;
   background: var(--surface-2); font-weight: 600; text-decoration: none; color: var(--text);
+  white-space: nowrap; /* a label never breaks; rows of buttons wrap whole buttons instead */
 }
 .btn svg { width: 18px; height: 18px; }
 .btn.primary { background: var(--accent); color: var(--accent-text); }
@@ -181,7 +182,7 @@ details summary { cursor: pointer; color: var(--muted); font-size: 14px; padding
 .icon-btn:hover:not(:disabled) { background: var(--surface-2); }
 .icon-btn:disabled { opacity: .3; cursor: default; }
 
-.link-btn { border: 0; background: none; color: var(--accent); font-weight: 600; font-size: 14px; padding: 4px; text-decoration: none; cursor: pointer; }
+.link-btn { border: 0; background: none; color: var(--accent); font-weight: 600; font-size: 14px; padding: 4px; text-decoration: none; cursor: pointer; white-space: nowrap; }
 .link-btn.danger { color: var(--danger); }
 
 /* ========== Expense list ========== */
@@ -216,10 +217,11 @@ details summary { cursor: pointer; color: var(--muted); font-size: 14px; padding
 .segmented button { flex: 1; border: 0; background: transparent; padding: 8px; border-radius: 10px; font-weight: 600; font-size: 14px; color: var(--muted); }
 .segmented button.active { background: var(--surface); color: var(--text); box-shadow: var(--shadow); }
 
-.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.tiles { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-bottom: 16px; }
 .tile { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); padding: 14px 16px; }
 .tile .label { font-size: 13px; color: var(--muted); }
-.tile .value { font-size: 22px; font-weight: 700; letter-spacing: -.02em; margin-top: 2px; }
+/* One line; a sum too big for the tile gets a smaller font (fitText in js/ui.js). */
+.tile .value { font-size: 22px; font-weight: 700; letter-spacing: -.02em; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tile.wide { grid-column: 1 / -1; }
 .tile.wide .value { font-size: 32px; }
 
@@ -265,8 +267,11 @@ details summary { cursor: pointer; color: var(--muted); font-size: 14px; padding
 }
 .avatar.inactive { background: var(--surface-2); color: var(--muted); }
 .account-name { display: flex; align-items: center; gap: 12px; min-width: 0; }
+/* Buttons side by side, equally wide; one that wouldn't fit its label moves to the next line.
+   On phones the account buttons always go one under the other. */
 .actions-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-.actions-row .btn { flex: 1; }
+.actions-row .btn { flex: 1; min-width: max-content; }
+@media (max-width: 699px) { .actions-row { flex-direction: column; } }
 
 /* ========== Forms ========== */
 .field { display: block; margin-bottom: 14px; }
@@ -324,8 +329,8 @@ select.input:focus { outline: none; } /* no highlight: Chromium treats a click o
 .swatch { width: 34px; height: 34px; border-radius: 50%; border: 3px solid transparent; background: var(--c); }
 .swatch.active { border-color: var(--text); }
 
-.form-actions { display: flex; gap: 10px; margin-top: 18px; }
-.form-actions .btn { flex: 1; }
+.form-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; } /* wraps like .actions-row */
+.form-actions .btn { flex: 1; min-width: max-content; }
 .error-text { color: var(--danger); font-size: 14px; margin: 8px 0 0; }
 
 /* ========== Expense form ========== */
@@ -403,7 +408,7 @@ select.input:focus { outline: none; } /* no highlight: Chromium treats a click o
 .meta-row input[type=datetime-local] { border: 0; background: transparent; font-size: 14px; padding: 0; min-height: 0; flex: 1; }
 .detail-block { margin-bottom: 12px; }
 
-.preview-amount { text-align: center; font-size: 44px; font-weight: 700; letter-spacing: -.03em; padding: 4px 0 16px; }
+.preview-amount { text-align: center; font-size: 44px; font-weight: 700; letter-spacing: -.03em; padding: 4px 0 16px; white-space: nowrap; overflow: hidden; } /* see fitText */
 
 .photo-preview { position: relative; margin: 8px 0 12px; }
 .photo-preview img { display: block; width: 100%; max-height: 240px; object-fit: cover; border-radius: 12px; cursor: zoom-in; }

@@ -7,7 +7,7 @@ export const state = {
   version: '',      // app version, e.g. "1.0"
   user: null,       // the logged-in user { id, username, displayName, isAdmin }
   users: [],        // all accounts — loaded only for the admin (Settings → Users)
-  settings: { currency: 'PLN', currencies: [], geocoding: false },
+  settings: { currency: 'EUR', currencies: [], geocoding: false },
   categories: [],   // shared by everyone, including archived ones
 };
 

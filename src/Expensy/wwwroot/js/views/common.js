@@ -3,6 +3,7 @@
 import { t } from '../i18n.js';
 import { html, raw } from '../html.js';
 import { icons } from '../icons.js';
+import { fitText } from '../ui.js';
 import { state, categoriesOf, categoryNames, categoryName } from '../state.js';
 import { money, dayKey, dayLabel, daysBetween, time, shortDate, monthLabel } from '../format.js';
 
@@ -114,7 +115,7 @@ const percent = (value, max) => Math.max(2, (value / max) * 100).toFixed(1);
 
 const CHART_DAYS_LIMIT = 62; // longer periods are shown per month
 
-/** Spending per day (or per month for long periods). Tap a bar to see its value (see bindChart). */
+/** Spending per day (or per month for long periods). Tap a bar to see its value (see bindStats). */
 function timeChart(oldestFirst) {
   const firstDay = dayKey(oldestFirst[0].spentAt);
   const lastDay = dayKey(oldestFirst.at(-1).spentAt);
@@ -152,8 +153,9 @@ function timeChart(oldestFirst) {
     </div>`;
 }
 
-/** Makes the bars of charts rendered by statsBlock() show their value when tapped. */
-export function bindChart(root) {
+/** Wires up what statsBlock() rendered: big amounts shrink to fit their tile, chart bars show their value when tapped. */
+export function bindStats(root) {
+  fitText(root.querySelectorAll('.tile .value'));
   root.querySelectorAll('[data-chart]').forEach((chart) => {
     const info = chart.parentElement.querySelector('[data-chart-info]');
     chart.onclick = (e) => {

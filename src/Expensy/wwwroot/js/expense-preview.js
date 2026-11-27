@@ -6,7 +6,7 @@ import { html } from './html.js';
 import { icons } from './icons.js';
 import { state, categoriesOf, categoryName } from './state.js';
 import { money, date, time } from './format.js';
-import { openSheet, confirmSheet, toast, toastError, showPhoto } from './ui.js';
+import { openSheet, confirmSheet, toast, toastError, showPhoto, fitText } from './ui.js';
 import { coordinatesText } from './location.js';
 import { miniMap, bindMapLinks } from './maps.js';
 import { openExpenseForm } from './expense-form.js';
@@ -42,6 +42,7 @@ export function openExpense(expense, onChange) {
       <button type="button" class="btn primary" data-edit>${icons.edit} ${t('common.edit')}</button>
     </div>`, (el) => {
     bindMapLinks(el.querySelector('.sheet-inner'));
+    fitText([el.querySelector('.preview-amount')]); // a big sum gets a smaller font on narrow phones
     el.querySelector('[data-photo]')?.addEventListener('click', (ev) => showPhoto(ev.target.src));
     el.querySelector('[data-edit]').onclick = () => openExpenseForm(e, onChange);
     el.querySelector('[data-delete]').onclick = () => deleteExpense(e, onChange);

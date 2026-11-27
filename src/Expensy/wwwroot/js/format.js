@@ -3,7 +3,7 @@ import { t, tc, locale } from './i18n.js';
 
 // ---------- Money ----------
 
-let currency = 'PLN';
+let currency = 'EUR';
 /** Called once the settings are loaded (state.js). */
 export const setCurrency = (code) => (currency = code);
 

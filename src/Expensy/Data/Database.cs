@@ -117,7 +117,7 @@ public sealed class Database
             ('clothes',       'Clothes',       '👕', '#eab308', 10),
             ('gifts',         'Gifts',         '🎁', '#f43f5e', 11);
 
-        INSERT INTO settings (key, value) VALUES ('currency', 'PLN');
+        INSERT INTO settings (key, value) VALUES ('currency', 'EUR');
         """,
     ];
 

@@ -22,7 +22,7 @@ public static class SettingsEndpoints
             using var c = db.Open();
             return new
             {
-                currency = c.GetSetting(Settings.Currency) ?? "PLN",
+                currency = c.GetSetting(Settings.Currency) ?? "EUR",
                 currencies = Currencies.Order(),
                 geocoding = geocoder.Enabled, // tells the app whether to show place names and mini maps
             };

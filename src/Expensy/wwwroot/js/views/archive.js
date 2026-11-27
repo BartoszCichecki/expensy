@@ -6,7 +6,7 @@ import { icons } from '../icons.js';
 import { money, date, shortDate, expensesCount } from '../format.js';
 import { openSheet, closeSheet, confirmSheet, submitForm, handleClick, toast, toastError } from '../ui.js';
 import { openExpense } from '../expense-preview.js';
-import { expenseList, statsBlock, bindChart, backLink, emptyState } from './common.js';
+import { expenseList, statsBlock, bindStats, backLink, emptyState } from './common.js';
 
 /** "3 Nov – 26 Nov" — when the settlement's expenses were made. */
 const spentRange = (s) =>
@@ -67,7 +67,7 @@ export async function renderSettlement(view, id, rerender) {
       </details>
       ${expenseList(expenses)}`}`.s;
 
-  bindChart(view);
+  bindStats(view);
   view.onclick = (e) => {
     handleClick(e.target, {
       '[data-expense]': (row) => openExpense(expenses.find((x) => x.id === Number(row.dataset.expense)), rerender),

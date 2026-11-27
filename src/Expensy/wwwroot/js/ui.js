@@ -201,3 +201,26 @@ export function toast(message, action) {
 }
 
 export const toastError = (err) => toast(err?.message ?? t('common.somethingWrong'));
+
+// ---------- Text that must fit ----------
+
+const MIN_FONT_PX = 12;
+const fittedWidths = new WeakMap(); // element → the width it was last fitted at
+
+/** Shrinks the text of each element (one line, `white-space: nowrap`) until it fits; again whenever its width changes. */
+export function fitText(elements) {
+  for (const el of elements) fitObserver.observe(el);
+}
+
+// Fires when an element appears (e.g. inside a <details> that opens), is resized (rotation) or is removed.
+const fitObserver = new ResizeObserver((entries) => {
+  for (const { target, contentRect } of entries) {
+    if (!target.isConnected) { fitObserver.unobserve(target); continue; }
+    if (contentRect.width === 0 || fittedWidths.get(target) === contentRect.width) continue; // hidden, or just taller
+    fittedWidths.set(target, contentRect.width);
+    target.style.fontSize = ''; // back to the size from the CSS, then shrink 1 px at a time
+    let size = parseFloat(getComputedStyle(target).fontSize);
+    while (target.scrollWidth > target.clientWidth && size > MIN_FONT_PX) target.style.fontSize = `${--size}px`;
+  }
+});
+
