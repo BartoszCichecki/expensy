@@ -10,7 +10,6 @@ import { t } from './i18n.js';
 import { html } from './html.js';
 import { icons } from './icons.js';
 import { decimalSeparator } from './format.js';
-import { haptic } from './haptics.js';
 
 const MAX_INTEGER_DIGITS = 9;
 const MAX_DECIMALS = 2;
@@ -55,16 +54,13 @@ function pressKey(value, k) {
  */
 export function bindKeypad(sheet, input) {
   const pad = sheet.querySelector('[data-keypad]');
-  // Fields that open the system keyboard (the currency picker and the hidden haptics switch don't).
-  const isOtherField = (el) => el.matches('input:not([name=amount]):not([switch]), textarea, select:not([name=currency])');
+  // Fields that open the system keyboard (the currency picker doesn't).
+  const isOtherField = (el) => el.matches('input:not([name=amount]), textarea, select:not([name=currency])');
   const setValue = (value) => {
     input.value = value;
     input.dispatchEvent(new Event('input', { bubbles: true })); // e.g. the currency conversion listens to this
   };
-  const press = (k) => {
-    setValue(pressKey(input.value, k));
-    haptic(sheet);
-  };
+  const press = (k) => setValue(pressKey(input.value, k));
 
   input.readOnly = true;
   input.setAttribute('inputmode', 'none');
@@ -80,7 +76,7 @@ export function bindKeypad(sheet, input) {
   let holdTimer;
   pad.addEventListener('pointerdown', (e) => {
     if (!e.target.closest('[data-key="back"]')) return;
-    holdTimer = setTimeout(() => { setValue(''); haptic(sheet, 20); }, 500);
+    holdTimer = setTimeout(() => setValue(''), 500);
   });
   for (const type of ['pointerup', 'pointerleave']) pad.addEventListener(type, () => clearTimeout(holdTimer));
 

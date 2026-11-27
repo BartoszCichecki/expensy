@@ -19,6 +19,14 @@
   --sidebar-w: 240px;
   --safe-t: env(safe-area-inset-top, 0px);    /* iPhone notch */
   --safe-b: env(safe-area-inset-bottom, 0px); /* iPhone home indicator */
+
+  /* Motion: every animation uses these (also js/app.js), so they all feel the same — quick and subtle.
+     The keyframes are at the end of this file. */
+  --motion-in: 200ms;                       /* appearing */
+  --motion-out: 150ms;                      /* disappearing, a little quicker */
+  --motion-shift: 16px;                     /* how far things slide */
+  --ease-out: cubic-bezier(.22, 1, .36, 1); /* appearing: fast start, soft landing */
+  --ease-in: cubic-bezier(.55, 0, 1, .45);  /* disappearing: eases off, then goes */
   color-scheme: light dark;
 }
 @media (prefers-color-scheme: dark) {
@@ -114,6 +122,7 @@ body:has(.fab:not([hidden])) .view { padding-bottom: calc(var(--tabs-h) + var(--
 }
 .fab svg { width: 28px; height: 28px; stroke-width: 2.75; }
 .fab:active { transform: translateX(-50%) scale(.98); }
+@media (prefers-reduced-motion: no-preference) { .fab, .key { transition: transform var(--motion-out) var(--ease-out); } }
 
 /* ========== Navigation: sidebar (wide screens) ========== */
 @media (min-width: 900px) {
@@ -379,8 +388,6 @@ select.input:focus { outline: none; } /* no highlight: Chromium treats a click o
   background: var(--bg); border-top: 1px solid var(--border);
 }
 .keypad.away { display: none; } /* while the note or date field has the system keyboard */
-/* Hidden switch that makes iPhones tick on key presses (js/haptics.js). Invisible, but still rendered. */
-.haptic-switch { position: fixed; left: 0; bottom: 0; width: 1px; height: 1px; overflow: hidden; opacity: 0; pointer-events: none; }
 .key {
   border: 0; border-radius: 14px; background: var(--surface); box-shadow: var(--shadow);
   font-size: 24px; font-weight: 500; display: grid; place-items: center;
@@ -447,16 +454,14 @@ select.input:focus { outline: none; } /* no highlight: Chromium treats a click o
   border-radius: 22px 22px 0 0; background: var(--bg); color: var(--text);
 }
 .sheet::backdrop { background: rgb(0 0 0 / .4); }
-.sheet:focus, .viewer:focus { outline: none; } /* the dialogs take the focus when they open (ui.js) */
-.sheet[open] { animation: sheet-up .22s ease-out; }
-@keyframes sheet-up { from { transform: translateY(40px); opacity: .4; } }
+.sheet:focus, .viewer:focus { outline: none; } /* the dialogs take the focus when they open (ui.js showDialog) */
 .sheet-inner { padding: 8px 16px calc(16px + var(--safe-b)); }
 .sheet-head { display: flex; align-items: center; justify-content: space-between; padding: 6px 0 10px; position: sticky; top: 0; background: var(--bg); z-index: 1; }
 .sheet-head h2 { margin: 0; font-size: 18px; }
 .grabber { width: 40px; height: 5px; border-radius: 3px; background: var(--border); margin: 0 auto 4px; }
 /* Full screen on phones (the expense form): no rounded top, the keypad at the very bottom. */
 @media (max-width: 699px) {
-  .sheet.full { height: 100%; max-height: none; border-radius: 0; animation-name: sheet-in; }
+  .sheet.full { height: 100%; max-height: none; border-radius: 0; }
   .sheet.full .grabber { display: none; }
   /* Three parts: the header and the keypad stay put, the fields between them scroll when they don't fit. */
   .sheet.full .sheet-inner { height: 100%; display: flex; flex-direction: column; padding-top: calc(4px + var(--safe-t)); }
@@ -470,9 +475,17 @@ select.input:focus { outline: none; } /* no highlight: Chromium treats a click o
   .sheet.full .sheet-head { padding: 2px 0 6px; }
   .sheet.full .amount-field { padding: 0 0 8px; }
 }
-@keyframes sheet-in { from { transform: translateY(24px); opacity: 0; } }
 @media (min-width: 700px) {
   .sheet { margin: auto; border-radius: 22px; max-width: 520px; } /* centred dialog instead of a bottom sheet */
+}
+
+/* Opening and closing (ui.js showDialog / closeDialog): sheets rise in and sink out, the backdrop and the photo
+   viewer fade. */
+@media (prefers-reduced-motion: no-preference) {
+  .sheet[open] { animation: rise-in var(--motion-in) var(--ease-out); }
+  .sheet.closing { animation: sink-out var(--motion-out) var(--ease-in) forwards; }
+  .sheet[open]::backdrop, .viewer[open] { animation: fade-in var(--motion-in) var(--ease-out); }
+  .sheet.closing::backdrop, .viewer.closing { animation: fade-out var(--motion-out) var(--ease-in) forwards; }
 }
 
 /* "Open in Apple Maps / Google Maps" */
@@ -500,13 +513,10 @@ select.input:focus { outline: none; } /* no highlight: Chromium treats a click o
 .toast.error { top: calc(var(--safe-t) + 12px); bottom: auto; background: #dc2626; font-weight: 500; }
 /* Slides in (errors from the top, the rest from below), fades out; ui.js hides it when the fade ends. */
 @media (prefers-reduced-motion: no-preference) {
-  .toast:popover-open { animation: toast-up .18s ease-out; }
-  .toast.error:popover-open { animation-name: toast-down; }
-  .toast:popover-open.leaving { animation: toast-fade .2s ease-in forwards; }
+  .toast:popover-open { animation: rise-in var(--motion-in) var(--ease-out); }
+  .toast.error:popover-open { animation-name: drop-in; }
+  .toast:popover-open.leaving { animation: fade-out var(--motion-out) var(--ease-in) forwards; }
 }
-@keyframes toast-up { from { opacity: 0; translate: 0 12px; } }
-@keyframes toast-down { from { opacity: 0; translate: 0 -100%; } }
-@keyframes toast-fade { to { opacity: 0; } }
 @media (min-width: 900px) { /* sidebar layout: centred in the content area, no Add button to clear */
   .toast { bottom: 32px; left: calc(50% + var(--sidebar-w) / 2); }
   .toast.error { bottom: auto; }
@@ -518,3 +528,12 @@ select.input:focus { outline: none; } /* no highlight: Chromium treats a click o
 .login img { width: 88px; height: 88px; border-radius: 22px; margin-bottom: 12px; }
 .login h1 { margin: 0 0 4px; }
 .login form { margin-top: 24px; text-align: left; }
+
+/* ========== Motion ========== */
+/* Shared keyframes; timing and easing come from the --motion-* / --ease-* variables in :root.
+   They move with `translate`, so they don't clash with a `transform` the element already has (the toast). */
+@keyframes rise-in { from { opacity: 0; translate: 0 var(--motion-shift); } }
+@keyframes drop-in { from { opacity: 0; translate: 0 calc(-1 * var(--motion-shift)); } }
+@keyframes sink-out { to { opacity: 0; translate: 0 var(--motion-shift); } }
+@keyframes fade-in { from { opacity: 0; } }
+@keyframes fade-out { to { opacity: 0; } }

@@ -31,6 +31,10 @@ const routes = [
   { pattern: /^#\/settings$/, tab: 'settings', render: () => renderSettings(view) },
 ];
 
+const TAB_ORDER = ['list', 'stats', 'archive', 'settings'];
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
+let shown = null; // { hash, tab } of the screen on display
+
 /** Renders the screen for the current URL hash. */
 async function route() {
   if (location.hash === '#/add') {
@@ -48,6 +52,25 @@ async function route() {
   } catch (err) {
     if (err.status !== 401) showError(err); // 401 → the login screen is already shown
   }
+
+  const previous = shown;
+  shown = { hash, tab: match.tab };
+  animateScreenChange(previous, shown);
+}
+
+/**
+ * A subtle slide and fade when another screen comes up, from the side its tab is on (a detail screen, like
+ * one settlement, from the right; back from the left). Not when the same screen just re-renders after a change.
+ */
+function animateScreenChange(from, to) {
+  if (!from || from.hash === to.hash || reducedMotion.matches) return;
+  const step = TAB_ORDER.indexOf(to.tab) - TAB_ORDER.indexOf(from.tab) || (to.hash.length > from.hash.length ? 1 : -1);
+  const motion = getComputedStyle(document.documentElement); // the same timing as every other animation (app.css :root)
+  const shift = motion.getPropertyValue('--motion-shift').trim();
+  view.animate(
+    [{ opacity: 0, translate: step > 0 ? shift : `-${shift}` }, { opacity: 1, translate: '0' }],
+    { duration: parseFloat(motion.getPropertyValue('--motion-in')), easing: motion.getPropertyValue('--ease-out').trim() },
+  );
 }
 
 function showError(err) {
@@ -85,6 +108,7 @@ async function start(user) {
 function signedOut(screen) {
   closeSheet();
   state.user = null;
+  shown = null;
   tabs.hidden = addButton.hidden = true;
   screen(view, start);
 }

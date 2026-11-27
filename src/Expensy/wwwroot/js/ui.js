@@ -4,6 +4,32 @@ import { t } from './i18n.js';
 import { html, raw } from './html.js';
 import { icons } from './icons.js';
 
+// ---------- Dialogs: opening and closing with an animation ----------
+
+const closeRuns = new WeakMap(); // dialog → number of its latest close, so a reopened dialog isn't closed by an older one
+
+/** Opens a modal dialog. The focus goes to the dialog itself (not its first button, the ×), and Esc closes it animated. */
+export function showDialog(d) {
+  closeRuns.set(d, (closeRuns.get(d) ?? 0) + 1); // cancels a close still animating
+  d.classList.remove('closing');
+  d.tabIndex = -1;
+  d.oncancel = (e) => { e.preventDefault(); closeDialog(d); }; // Esc
+  if (!d.open) d.showModal();
+  d.focus({ preventScroll: true });
+}
+
+/** Plays the dialog's closing animation (.closing in app.css), then closes it — unless it was opened again meanwhile. */
+export async function closeDialog(d) {
+  if (!d.open || d.classList.contains('closing')) return;
+  const run = (closeRuns.get(d) ?? 0) + 1;
+  closeRuns.set(d, run);
+  d.classList.add('closing');
+  await Promise.allSettled(d.getAnimations().map((a) => a.finished)); // none with reduced motion
+  if (closeRuns.get(d) !== run) return;
+  d.classList.remove('closing');
+  d.close();
+}
+
 // ---------- Bottom sheet ----------
 // There is one <dialog id="sheet"> in index.html; opening a sheet replaces its content.
 
@@ -27,16 +53,16 @@ export function openSheet(title, content, setup, { fullScreen = false } = {}) {
     </div>`.s;
   el.querySelector('[data-close]').onclick = closeSheet;
   el.onclick = (e) => { if (e.target === el) closeSheet(); }; // tap on the backdrop
-  if (!el.open) el.showModal();
-  el.focus({ preventScroll: true }); // otherwise the browser focuses the first button, the ×, and may draw a ring round it
+  showDialog(el);
   setup?.(el);
   return el;
 }
 
-export function closeSheet() {
+/** Closes the sheet (animated). Resolves when it's closed, or when another sheet has opened in its place. */
+export async function closeSheet() {
   const el = sheet();
-  if (el.open) el.close();
-  el.innerHTML = '';
+  await closeDialog(el);
+  if (!el.open) el.innerHTML = '';
 }
 
 /** Asks a yes/no question in the sheet. Resolves true (confirmed) or false (cancelled / closed). */
@@ -179,15 +205,13 @@ export function handleClick(target, handlers) {
 export function showPhoto(src) {
   const viewer = document.createElement('dialog');
   viewer.className = 'viewer';
-  viewer.tabIndex = -1; // takes the focus itself, like the sheet, so the × isn't highlighted
   viewer.innerHTML = html`
     <img src="${src}" alt="${t('form.photo')}">
     <button class="icon-btn" aria-label="${t('common.close')}">${icons.close}</button>`.s;
-  viewer.onclick = () => viewer.close();
+  viewer.onclick = () => closeDialog(viewer);
   viewer.addEventListener('close', () => viewer.remove());
   document.body.append(viewer);
-  viewer.showModal();
-  viewer.focus({ preventScroll: true });
+  showDialog(viewer);
 }
 
 // ---------- Toast ----------

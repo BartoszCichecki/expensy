@@ -8,6 +8,7 @@ import { t } from './i18n.js';
 import { html, raw } from './html.js';
 import { icons } from './icons.js';
 import { loadPref, savePref } from './storage.js';
+import { showDialog, closeDialog } from './ui.js';
 
 const MAPS_PREF = 'expensy.mapsApp'; // 'apple' | 'google' | absent = ask every time
 
@@ -59,14 +60,14 @@ function askWhichApp(lat, lon, label) {
     if (app) {
       if (d.querySelector('[name=remember]').checked) setMapsPreference(app);
       open(urls[app](lat, lon, label));
-      d.close();
+      closeDialog(d);
     } else if (e.target === d || e.target.closest('[data-close]')) {
-      d.close();
+      closeDialog(d);
     }
   };
   d.addEventListener('close', () => d.remove());
   document.body.append(d);
-  d.showModal();
+  showDialog(d);
 }
 
 // ---------- Mini map ----------
